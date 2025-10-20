@@ -13,14 +13,11 @@ class AuthController extends Controller
     public function Register(Request $request)
     {
         $request->validate([
-            "name" => "string|max:255|required|unique:users,name",
             "email" => "required|email|max:255", 
             "password" => "min:8|required|confirmed", 
         ]);
-        
 
         $user = User::create([
-            "name" => $request->name,
             "email" => $request->email,
             "password" => Hash::make($request->password),
         ]);
@@ -32,13 +29,13 @@ class AuthController extends Controller
     }
     public function login(Request $request)
     {
-        $request->validate(["name", "password"]);
+        $request->validate(["email", "password"]);
 
-        $user = User::where("name", $request->name)->first();
+        $user = User::where("email", $request->email)->first();
         if(!$user) {
             return response()->json([
                 "status"=>"unsuccess",
-                "message"=>"invalid name"
+                "message"=>"invalid email"
             ]);
         }
         if(!Hash::check($request->password, $user->password)){
@@ -92,7 +89,7 @@ class AuthController extends Controller
     
             return response()->json([
                 'status' => 'error',
-                'message' => 'An error occurred during logout. Please try again later.',
+                'message' => '500',
             ], 500);
         }
     }

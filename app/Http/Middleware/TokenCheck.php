@@ -20,7 +20,7 @@ class TokenCheck
         $token = $request->bearerToken();
         if(!$token || !Token::where("token", $token)->exists()){
             return response()->json([
-                "msg"=>"not authorized",
+                "message"=>"not authorized",
             ], 401);
         }
 
