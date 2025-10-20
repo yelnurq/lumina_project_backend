@@ -10,88 +10,111 @@ use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
-    public function Register(Request $request)
+    public function register(Request $request)
     {
-        $request->validate([
-            "email" => "required|email|max:255", 
-            "password" => "min:8|required|confirmed", 
+        $validated = $request->validate([
+            'email' => 'required|email|max:255|unique:users,email',
+            'password' => 'required|string|min:8',
         ]);
 
-        $user = User::create([
-            "email" => $request->email,
-            "password" => Hash::make($request->password),
-        ]);
+        try {
+            $user = User::create([
+                'email' => $validated['email'],
+                'password' => Hash::make($validated['password']),
+            ]);
 
-        return response()->json([
-            "status"=>"success",
-            "user"=>$user,
-        ]);
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Пользователь успешно зарегистрирован!',
+                'user' => $user,
+            ], 201);
+        } catch (\Exception $e) {
+            \Log::error('Ошибка регистрации: ' . $e->getMessage());
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Не удалось зарегистрировать пользователя. Попробуйте позже.',
+            ], 500);
+        }
     }
+
     public function login(Request $request)
     {
-        $request->validate(["email", "password"]);
-
-        $user = User::where("email", $request->email)->first();
-        if(!$user) {
-            return response()->json([
-                "status"=>"unsuccess",
-                "message"=>"invalid email"
-            ]);
-        }
-        if(!Hash::check($request->password, $user->password)){
-            return response()->json([
-                "status"=>"unsuccess",
-                "message"=>"invalid password"
-            ]);
-        }
-
-        $token = Str::random(60);
-        Token::create([
-            "user_id"=>$user->id,
-            "token"=>$token,
+        $validated = $request->validate([
+            'email' => 'required|email',
+            'password' => 'required|string',
         ]);
 
-        return response()->json([
-            "status"=>"success",
-            "token"=>$token,
-        ]);
+        $user = User::where('email', $validated['email'])->first();
 
+        if (!$user) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Пользователь с таким email не найден.',
+            ], 404);
+        }
+
+        if (!Hash::check($validated['password'], $user->password)) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Неверный пароль.',
+            ], 401);
+        }
+
+        try {
+            $token = Str::random(60);
+            Token::create([
+                'user_id' => $user->id,
+                'token' => $token,
+            ]);
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Авторизация успешна.',
+                'token' => $token,
+                'user' => $user,
+            ], 200);
+        } catch (\Exception $e) {
+            \Log::error('Ошибка входа: ' . $e->getMessage());
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Не удалось выполнить вход. Попробуйте позже.',
+            ], 500);
+        }
     }
+
     public function logout(Request $request)
     {
         try {
             $token = $request->bearerToken();
-    
+
             if (!$token) {
                 return response()->json([
                     'status' => 'error',
-                    'message' => 'Token not provided',
+                    'message' => 'Токен не предоставлен.',
                 ], 400);
             }
-    
+
             $tokenRecord = Token::where('token', $token)->first();
-    
+
             if (!$tokenRecord) {
                 return response()->json([
                     'status' => 'error',
-                    'message' => 'Invalid token',
+                    'message' => 'Недействительный токен.',
                 ], 401);
             }
-    
+
             $tokenRecord->delete();
-    
+
             return response()->json([
                 'status' => 'success',
-                'message' => 'Logout successful',
-            ]);
+                'message' => 'Вы успешно вышли из системы.',
+            ], 200);
         } catch (\Exception $e) {
-            \Log::error('Logout error: ' . $e->getMessage());
-    
+            \Log::error('Ошибка выхода: ' . $e->getMessage());
             return response()->json([
                 'status' => 'error',
-                'message' => '500',
+                'message' => 'Произошла ошибка при выходе. Попробуйте позже.',
             ], 500);
         }
     }
-    
 }
