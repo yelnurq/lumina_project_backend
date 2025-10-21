@@ -10,6 +10,41 @@ use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
+    public function index()
+    {
+        $users = User::all();
+        return response()->json($users);
+    }
+    
+    public function delete($id)
+    {
+        try {
+            $user = User::find($id);
+
+            if (!$user) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Пользователь не найден.',
+                ], 404);
+            }
+
+            Token::where('user_id', $user->id)->delete();
+
+            $user->delete();
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Пользователь успешно удалён.',
+            ], 200);
+        } catch (\Exception $e) {
+            \Log::error('Ошибка удаления пользователя: ' . $e->getMessage());
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Не удалось удалить пользователя. Попробуйте позже.',
+            ], 500);
+        }
+    }
+
     public function register(Request $request)
     {
         $validated = $request->validate([

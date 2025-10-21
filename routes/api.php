@@ -11,6 +11,8 @@ Route::post("/login", [AuthController::class, "login"]);
 Route::post("/register", [AuthController::class, "register"]);
 Route::post("/logout", [AuthController::class, "logout"])->middleware(TokenCheck::class);
 
+Route::delete('/users/{id}', [AuthController::class, 'delete']);
+
 Route::post("/feedbacks", [FeedbackController::class, "store"]);
 Route::get('/blogs', [BlogController::class, 'index']);
 Route::get('/blogs/{slug}', [BlogController::class, 'show']);
