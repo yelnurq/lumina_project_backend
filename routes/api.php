@@ -5,7 +5,7 @@ use App\Http\Controllers\FeedbackController;
 use App\Http\Middleware\TokenCheck;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\BlogController;
-
+use App\Http\Controllers\DocumentController;
 
 Route::post("/login", [AuthController::class, "login"]);
 Route::post("/register", [AuthController::class, "register"]);
@@ -16,6 +16,12 @@ Route::delete('/users/{id}', [AuthController::class, 'delete']);
 Route::post("/feedbacks", [FeedbackController::class, "store"]);
 Route::get('/blogs', [BlogController::class, 'index']);
 Route::get('/blogs/{slug}', [BlogController::class, 'show']);
+
+Route::get('/documents', [DocumentController::class, 'index']);
+Route::get('/documents/{slug}', [DocumentController::class, 'show']);
+Route::post('/documents', [DocumentController::class, 'store']);
+Route::put('/documents/{slug}', [DocumentController::class, 'update']);
+Route::delete('/documents/{slug}', [DocumentController::class, 'destroy']);
 
 Route::middleware(TokenCheck::class)->group(function(){
     Route::get("/feedbacks", [FeedbackController::class, "index"]);
